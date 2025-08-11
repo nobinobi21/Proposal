@@ -217,6 +217,78 @@ function spawnSparkles() {
 </script>
 
 </body>
+</html>  try { audio.play(); } catch(e) { console.warn("Autoplay blocked", e); }
+
+  // Hearts animation
+  spawnHearts();
+
+  // Start text typing
+  setTimeout(() => {
+    typeMessage(text, document.getElementById("message"), () => {
+      // After typing finishes, go to screen 3
+      setTimeout(() => fadeSwitch(screen2, screen3), 2000);
+      spawnSparkles();
+      document.getElementById("finalMessage").style.opacity = 1;
+    });
+  }, 1000);
+}
+
+function typeMessage(message, targetElem, callback) {
+  targetElem.textContent = "";
+  targetElem.style.opacity = 1;
+  let i = 0;
+  function typing() {
+    if (i < message.length) {
+      targetElem.textContent += message.charAt(i);
+      i++;
+      setTimeout(typing, 40);
+    } else if (callback) callback();
+  }
+  typing();
+}
+
+function moveNo() {
+  const maxX = window.innerWidth - noBtn.clientWidth - 20;
+  const maxY = window.innerHeight - noBtn.clientHeight - 20;
+  noBtn.style.position = "absolute";
+  noBtn.style.left = Math.random() * maxX + "px";
+  noBtn.style.top = Math.random() * maxY + "px";
+}
+
+function fadeSwitch(hideElem, showElem) {
+  hideElem.classList.add('hidden');
+  setTimeout(() => {
+    showElem.classList.remove('hidden');
+  }, 1000);
+}
+
+function spawnHearts() {
+  const container = document.getElementById("hearts-container");
+  setInterval(() => {
+    const heart = document.createElement("div");
+    heart.classList.add("heart");
+    heart.style.left = Math.random() * 100 + "vw";
+    heart.style.fontSize = Math.random() * 20 + 20 + "px";
+    heart.innerHTML = "❤️";
+    container.appendChild(heart);
+    setTimeout(() => heart.remove(), 6000);
+  }, 500);
+}
+
+function spawnSparkles() {
+  const container = document.getElementById("sparkles-container");
+  setInterval(() => {
+    const sparkle = document.createElement("div");
+    sparkle.classList.add("sparkle");
+    sparkle.style.left = Math.random() * 100 + "vw";
+    sparkle.style.width = sparkle.style.height = Math.random() * 5 + 3 + "px";
+    container.appendChild(sparkle);
+    setTimeout(() => sparkle.remove(), 4000);
+  }, 200);
+}
+</script>
+
+</body>
 </html><!DOCTYPE html>
 <html lang="en">
 <head>
@@ -510,3 +582,4 @@ function spawnSparkles() {
 </body>
 
 </html>
+
