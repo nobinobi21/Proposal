@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Special for You ❤️</title>
+<style>
+  :root{--yes:#ff4e78;--no:#8a8a8a}
+  html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:#000;color:#fff}
+  .screen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .9s ease,transform .9s ease}
+  .hidden{opacity:0;pointer-events:none;transform:scale(.98)}
+  img{max-width:92%;max-height:62vh;border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,0.5)}
+  .btnRow{display:flex;gap:18px;margin-top:18px;align-items:center;justify-content:center}
+  .btn{padding:12px 22px;border-radius:12px;border:0;font-size:18px;cursor:pointer;box-shadow:0 8px 20px rgba(0,0,0,0.12)}
+  .btn:active{transform:translateY(2px)}
+  #yesBtn{background:linear-gradient(90deg,#ff8aa0,var(--yes));color:#fff;z-index:30}
+  #noBtn{background:var(--no);color:#111;position:relative;z-index:20}
+  /* ensure yes area is large on mobile */
+  #yesBtn{min-width:120px}
+  #noBtn{min-width:110px}
+
+  /* second screen */
+  #screen2{background:linear-gradient(135deg,#ff9a9e,#fad0c4)}
+  #message{opacity:0;margin-top:18px;font-size:20px;max-width:88%;line-height:1.6;transition:opacity .5s ease}
+
+  /* hearts */
+  .heart{position:absolute;bottom:-20px;pointer-events:none;font-size:26px;animation:floatUp 6s linear infinite;opacity:.85}
+  @keyframes floatUp{0%{transform:translateY(0) scale(1)}100%{transform:translateY(-120vh) scale(1.6);opacity:0}}
+
+  /* third screen */
+  #screen3{background:linear-gradient(135deg,#a18cd1,#fbc2eb)}
+  video{max-width:82%;border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,0.35)}
+  #finalMessage{opacity:0;margin-top:18px;font-size:18px;max-width:86%;line-height:1.6;text-align:center}
+
+  /* small screens */
+  @media (max-width:420px){
+    #message,#finalMessage{font-size:16px}
+    .btn{padding:12px 18px}
+  }
+</style>
+</head>
+<body>
+
+<!-- Screen 1 -->
+<div id="screen1" class="screen" style="background:linear-gradient(135deg,#fbc2eb,#a6c1ee)">
+  <img src="first.jpg" alt="Nice hands" id="handImg">
+  <div class="btnRow" style="margin-top:18px">
+    <button id="yesBtn" class="btn" aria-label="Yes">Yes ❤️</button>
+    <button id="noBtn" class="btn" aria-label="No">No 😢</button>
+  </div>
+</div>
+
+<!-- Screen 2 -->
+<div id="screen2" class="screen hidden">
+  <div id="hearts-container" style="position:absolute;inset:0;overflow:hidden;pointer-events:none"></div>
+  <img src="second.jpg" alt="Love cat" id="loveImg" style="box-shadow:0 0 30px rgba(255,255,255,0.85)">
+  <div id="message"></div>
+</div>
+
+<!-- Screen 3 -->
+<div id="screen3" class="screen hidden">
+  <div id="sparkles-container" style="position:absolute;inset:0;pointer-events:none"></div>
+  <video id="clip" src="images.mp4" autoplay loop muted playsinline></video>
+  <div id="finalMessage">
+    If you need time, I will respect and wait.<br>
+    If you are not interested, I will respect your decision and we can be friends.<br>
+    But you will always have a special place in my heart ❤️
+  </div>
+</div>
+
+<!-- We will create audio on click to ensure browsers allow it -->
+<script>
+/* --- config & elements --- */
+const yesBtn = document.getElementById('yesBtn');
+const noBtn = document.getElementById('noBtn');
+const screen1 = document.getElementById('screen1');
+const screen2 = document.getElementById('screen2');
+const screen3 = document.getElementById('screen3');
+const msgElem = document.getElementById('message');
+const finalElem = document.getElementById('finalMessage');
+const heartsContainer = document.getElementById('hearts-container');
+const sparklesContainer = document.getElementById('sparkles-container');
+
+const text = "Before, whenever I saw a girl I felt attracted instantly. But you… you were different. I wasn’t drawn to you right away, yet over time, something deeper grew. After months, it turned into love—the first real love I’ve ever felt. You will always have a special place in my heart ❤️";
+
+/* --- robust audio logic: create & play inside user gesture --- */
+let bgAudio = null;
+let audioIsPlaying = false;
+function playMusicNow() {
+  if (bgAudio) return bgAudio; // already created
+  try {
+    bgAudio = new Audio('yennaan-seivan.mp3'); // must be exact filename
+    bgAudio.loop = true;
+    bgAudio.preload = 'auto';
+    bgAudio.playsinline = true;
+    bgAudio.volume = 0.0; // start silent then fade-in
+    // Play immediately (user gesture) and fade volume in
+    bgAudio.play().then(() => {
+      audioIsPlaying = true;
+      // fade volume to 0.9 over 1.2s
+      let v = 0;
+      const fade = setInterval(()=> {
+        v += 0.07;
+        bgAudio.volume = Math.min(0.9, v);
+        if (bgAudio.volume >= 0.9) clearInterval(fade);
+      }, 100);
+    }).catch(err => {
+      console.warn('Audio play failed:', err);
+      // still continue without audio
+    });
+    return bgAudio;
+  } catch(e){
+    console.warn('Audio error', e);
+    return null;
+  }
+}
+
+/* --- Yes handler: ensure audio.play() is inside the click/touchstart event --- */
+let yesHandled = false;
+function handleYes(e){
+  if (yesHandled) return;
+  yesHandled = true;
+  // create+play audio (user gesture)
+  playMusicNow();
+  // Show screen2 immediately
+  fadeSwitch(screen1, screen2);
+  spawnHearts();
+  // begin typewriter after a short delay
+  setTimeout(()=> {
+    typeMessage(text, msgElem, () => {
+      // after typing finishes, go to screen3
+      setTimeout(()=> {
+        fadeSwitch(screen2, screen3);
+        spawnSparkles();
+        finalElem.style.opacity = 1;
+      }, 1400);
+    });
+  }, 900);
+}
+
+// Ensure both click and touchstart trigger audio reliably
+yesBtn.addEventListener('click', handleYes, {passive: false});
+yesBtn.addEventListener('touchstart', function(e){ e.preventDefault(); handleYes(e); }, {passive:false});
+
+/* --- No button dodge: support desktop hover, pointer events, touchstart --- */
+let moving = false;
+function moveNo(){
+  if (moving) return;
+  moving = true;
+  const maxX = Math.max(20, window.innerWidth - noBtn.clientWidth - 30);
+  const maxY = Math.max(20, window.innerHeight - noBtn.clientHeight - 30);
+  const nx = Math.random() * maxX;
+  const ny = Math.random() * maxY;
+  noBtn.style.position = 'absolute';
+  noBtn.style.left = nx + 'px';
+  noBtn.style.top = ny + 'px';
+  setTimeout(()=> moving = false, 220); // small cooldown
+}
+noBtn.addEventListener('pointerover', moveNo);
+noBtn.addEventListener('touchstart', function(e){ e.preventDefault(); moveNo(); }, {passive:false});
+
+/* --- helpers --- */
+function fadeSwitch(hideEl, showEl){
+  hideEl.classList.add('hidden');
+  setTimeout(()=> {
+    showEl.classList.remove('hidden');
+    // keep scroll at top for mobile
+    window.scrollTo({top:0,behavior:'smooth'});
+  }, 800);
+}
+
+function typeMessage(message, target, cb){
+  target.textContent = '';
+  target.style.opacity = 1;
+  let i = 0;
+  function step(){
+    if (i < message.length){
+      target.textContent += message.charAt(i);
+      i++;
+      setTimeout(step, 36);
+    } else if(cb) cb();
+  }
+  step();
+}
+
+/* --- visuals: hearts & sparkles --- */
+function spawnHearts(){
+  const interval = setInterval(()=> {
+    const d = document.createElement('div');
+    d.className = 'heart';
+    d.style.left = Math.random()*100 + 'vw';
+    d.style.fontSize = Math.random()*18 + 18 + 'px';
+    d.innerText = '❤️';
+    heartsContainer.appendChild(d);
+    setTimeout(()=> d.remove(), 6200);
+  }, 450);
+  // stop after some time to avoid build-up
+  setTimeout(()=> clearInterval(interval), 14000);
+}
+
+function spawnSparkles(){
+  const interval = setInterval(()=> {
+    const s = document.createElement('div');
+    s.className = 'sparkle';
+    s.style.left = Math.random()*100 + 'vw';
+    const size = Math.random()*6 + 4;
+    s.style.width = s.style.height = size + 'px';
+    sparklesContainer.appendChild(s);
+    setTimeout(()=> s.remove(), 4200);
+  }, 180);
+  setTimeout(()=> clearInterval(interval), 10000);
+}
+
+/* --- small safety: if user taps on image, also trigger Yes (nice UX) --- */
+document.getElementById('handImg').addEventListener('click', ()=> yesBtn.click());
+document.getElementById('handImg').addEventListener('touchstart', ()=> yesBtn.click());
+
+</script>
+</body>
+</html>
